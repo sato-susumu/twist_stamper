@@ -18,7 +18,8 @@ from rclpy.node import Node
 from std_msgs.msg import Header
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import TwistStamped
-
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSHistoryPolicy, QoSReliabilityPolicy
 
 class TwistStamper(Node):
 
@@ -28,13 +29,19 @@ class TwistStamper(Node):
         self.declare_parameter("frame_id", "")
         self.frame_id = str(self.get_parameter("frame_id").value)
 
-        self.publisher_ = self.create_publisher(TwistStamped, 'cmd_vel_out', 10)
+        qos_profile = QoSProfile(
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            reliability=QoSReliabilityPolicy.BEST_EFFORT
+        )
+
+        self.publisher_ = self.create_publisher(TwistStamped, 'cmd_vel_out', qos_profile)
 
         self.subscription = self.create_subscription(
             Twist,
             'cmd_vel_in',
             self.listener_callback,
-            10)
+            qos_profile)
         self.subscription  # prevent unused variable warning
 
     def listener_callback(self, inMsg):
